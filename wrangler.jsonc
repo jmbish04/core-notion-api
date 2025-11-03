@@ -1,0 +1,23 @@
+{
+  "name": "notion-proxy-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-11-02",
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./public"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "NODE_ENV": "production"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "notion_proxy_logs",
+      // Replace "auto" with actual database_id after running: wrangler d1 create notion_proxy_logs
+      "database_id": "auto"
+    }
+  ]
+}
