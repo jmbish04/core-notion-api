@@ -11,3 +11,6 @@ frontend/dist
 
 # Test scripts
 test-endpoints.sh
+
+# Build artifacts
+public/assets
