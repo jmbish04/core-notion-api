@@ -1,4 +1,4 @@
-# notion-sdk-typescript-starter
+# core-notion-api
 
 This is a template repository for getting started with the [Notion SDK](https://github.com/makenotion/notion-sdk-js)
 and [TypeScript](https://www.typescriptlang.org/).
