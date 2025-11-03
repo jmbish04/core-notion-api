@@ -1,3 +1,10 @@
 node_modules
 dist
 .env
+# Frontend
+frontend/node_modules
+frontend/dist
+
+# Wrangler
+.wrangler
+.dev.vars
