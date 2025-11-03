@@ -30,7 +30,14 @@ cloneDatabaseSchema.post('/', async (c) => {
       database_id: validated.source_database_id,
     });
 
-    // Create a new database with the same properties
+    // Create a new database with the same properties, removing IDs from the property definitions.
+    const createProperties = Object.fromEntries(
+      Object.entries((sourceDb as any).properties).map(([name, prop]: [string, any]) => {
+        const { id, ...rest } = prop;
+        return [name, rest];
+      })
+    );
+
     const newDb = await notion.databases.create({
       parent: validated.parent as any,
       title: [
@@ -40,7 +47,7 @@ cloneDatabaseSchema.post('/', async (c) => {
           },
         },
       ],
-      properties: (sourceDb as any).properties,
+      properties: createProperties,
     });
 
     const result = {
