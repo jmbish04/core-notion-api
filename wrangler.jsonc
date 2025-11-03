@@ -16,6 +16,7 @@
     {
       "binding": "DB",
       "database_name": "notion_proxy_logs",
+      // Replace "auto" with actual database_id after running: wrangler d1 create notion_proxy_logs
       "database_id": "auto"
     }
   ]
