@@ -1,5 +1,5 @@
 {
-  "name": "notion-proxy-worker",
+  "name": "core-notion-api",
   "main": "src/index.ts",
   "compatibility_date": "2025-11-02",
   "assets": {
@@ -15,9 +15,12 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "notion_proxy_logs",
-      // Replace "auto" with actual database_id after running: wrangler d1 create notion_proxy_logs
-      "database_id": "auto"
+      "database_name": "notion-proxy",
+      "database_id": "1cfda39d-e176-432b-a89e-a751cc555d5b",
+      "migrations_dir": "migrations"
     }
-  ]
+  ],
+  "ai": {
+    "binding": "AI"
+  }
 }
