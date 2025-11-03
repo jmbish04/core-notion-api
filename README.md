@@ -53,7 +53,7 @@ wrangler d1 create notion_proxy_logs
 # Update wrangler.jsonc with the database_id from the output
 
 # Run migrations
-wrangler d1 migrations apply notion_proxy_logs
+wrangler d1 migrations apply notion_proxy_logs --local
 ```
 
 4. Configure secrets:
