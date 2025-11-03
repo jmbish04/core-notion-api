@@ -8,3 +8,6 @@ frontend/dist
 # Wrangler
 .wrangler
 .dev.vars
+
+# Test scripts
+test-endpoints.sh
