@@ -9,6 +9,7 @@ import { successResponse, errorResponse } from '../../utils/response';
 import { createNotionClient } from '../../lib/notion';
 import { createFlowRun, updateFlowRun } from '../../lib/logger';
 import { CloneDatabaseSchemaSchema } from '../../schemas/flows';
+import { sendFlowUpdate } from '../../lib/websocket';
 
 const cloneDatabaseSchema = new Hono<{ Bindings: Env }>();
 
@@ -23,6 +24,14 @@ cloneDatabaseSchema.post('/', async (c) => {
     const body = await c.req.json();
     const validated = CloneDatabaseSchemaSchema.parse(body);
 
+    c.executionCtx?.waitUntil(
+      sendFlowUpdate(c.env, flowRunId, {
+        type: 'flow_started',
+        flow: 'cloneDatabaseSchema',
+        sourceDatabaseId: validated.source_database_id,
+      })
+    );
+
     const notion = createNotionClient(validated.notion_token);
 
     // Retrieve the source database to get its schema
@@ -30,15 +39,23 @@ cloneDatabaseSchema.post('/', async (c) => {
       database_id: validated.source_database_id,
     });
 
+    c.executionCtx?.waitUntil(
+      sendFlowUpdate(c.env, flowRunId, {
+        type: 'source_database_retrieved',
+        flow: 'cloneDatabaseSchema',
+        sourceDatabaseId: validated.source_database_id,
+      })
+    );
+
     // Create a new database with the same properties, removing IDs from the property definitions.
     const createProperties = Object.fromEntries(
       Object.entries((sourceDb as any).properties).map(([name, prop]: [string, any]) => {
         const { id, ...rest } = prop;
         return [name, rest];
       })
-    );
+    ) as Record<string, any>;
 
-    const newDb = await notion.databases.create({
+    const newDb = await (notion.databases as any).create({
       parent: validated.parent as any,
       title: [
         {
@@ -50,16 +67,39 @@ cloneDatabaseSchema.post('/', async (c) => {
       properties: createProperties,
     });
 
+    c.executionCtx?.waitUntil(
+      sendFlowUpdate(c.env, flowRunId, {
+        type: 'database_created',
+        flow: 'cloneDatabaseSchema',
+        databaseId: (newDb as any).id,
+      })
+    );
+
     const result = {
+      flowRunId,
       source_database: sourceDb,
       new_database: newDb,
     };
 
     await updateFlowRun(c.env, flowRunId, 'completed', JSON.stringify(result));
+    c.executionCtx?.waitUntil(
+      sendFlowUpdate(c.env, flowRunId, {
+        type: 'flow_completed',
+        flow: 'cloneDatabaseSchema',
+        databaseId: (newDb as any).id,
+      })
+    );
 
     return c.json(successResponse(result));
   } catch (error: any) {
     await updateFlowRun(c.env, flowRunId, 'failed', undefined, error.message);
+    c.executionCtx?.waitUntil(
+      sendFlowUpdate(c.env, flowRunId, {
+        type: 'flow_failed',
+        flow: 'cloneDatabaseSchema',
+        error: error.message,
+      })
+    );
     return c.json(errorResponse(error.message || 'Flow failed'), 500);
   }
 });

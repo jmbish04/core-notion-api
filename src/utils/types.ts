@@ -3,6 +3,8 @@
  * Defines Cloudflare Worker environment bindings and shared types
  */
 
+import type { Ai, DurableObjectNamespace } from '@cloudflare/workers-types';
+
 /**
  * Cloudflare Worker environment bindings
  */
@@ -13,6 +15,10 @@ export interface Env {
   DB: D1Database;
   /** Assets binding for serving static files */
   ASSETS: Fetcher;
+  /** Workers AI binding */
+  AI: Ai;
+  /** Durable Object namespace for flow monitoring */
+  FLOW_MONITOR: DurableObjectNamespace;
   /** Environment mode */
   NODE_ENV?: string;
 }

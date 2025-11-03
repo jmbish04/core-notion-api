@@ -4,11 +4,13 @@
  */
 
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import type { Env } from './utils/types';
 import { corsMiddleware } from './middleware/cors';
 import { authMiddleware } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 import { logRequest } from './lib/logger';
+import { streamFlowUpdates } from './lib/sse';
 
 // Import routes
 import health from './routes/health';
@@ -16,6 +18,11 @@ import monitor from './routes/monitor';
 import openapi from './routes/openapi';
 import raw from './routes/raw/index';
 import flows from './routes/flows/index';
+import { errorResponse } from './utils/response';
+
+function serveSpa(c: Context<{ Bindings: Env }>) {
+  return c.env.ASSETS.fetch(new URL('/index.html', c.req.url));
+}
 
 // Create main Hono application
 const app = new Hono<{ Bindings: Env }>();
@@ -45,11 +52,26 @@ app.use('*', async (c, next) => {
 // Public routes (no auth required)
 app.route('/health', health);
 app.route('/openapi', openapi);
+app.get('/ws/flow-updates/:flowId', (c) => {
+  const id = c.env.FLOW_MONITOR.idFromName(c.req.param('flowId'));
+  const stub = c.env.FLOW_MONITOR.get(id);
+  return stub.fetch(c.req.raw);
+});
 
 // Protected API routes (auth required)
 app.use('/api/*', authMiddleware);
 app.route('/api/raw', raw);
 app.route('/api/flows', flows);
+
+app.get('/mcp/stream/:flowId', (c) => {
+  const headerAuth = c.req.header('authorization');
+  const queryAuth = c.req.query('apiKey');
+  const token = headerAuth?.replace(/^Bearer\s+/i, '') ?? queryAuth;
+  if (token !== c.env.WORKER_API_KEY) {
+    return c.json(errorResponse('Unauthorized'), 401);
+  }
+  return streamFlowUpdates(c, c.req.param('flowId'));
+});
 
 // Protected monitoring route
 app.use('/monitor', authMiddleware);
@@ -73,17 +95,11 @@ app.get('/', (c) => {
 });
 
 // Static file serving (for frontend assets)
-// Note: In production, this would be handled by the assets binding
-app.get('/docs', async (c) => {
-  const docsHtml = await c.env.ASSETS.fetch(new URL('/docs.html', c.req.url));
-  if (docsHtml.ok) {
-    return new Response(docsHtml.body, {
-      headers: {
-        'Content-Type': 'text/html;charset=UTF-8',
-      },
-    });
-  }
-  return c.notFound();
-});
+app.get('/assets/*', (c) => c.env.ASSETS.fetch(c.req.raw));
+app.get('/favicon.ico', (c) => c.env.ASSETS.fetch(c.req.raw));
+app.get('/docs', serveSpa);
+app.get('/monitor', serveSpa);
+app.get('/flows', serveSpa);
 
 export default app;
+export { FlowMonitorDO } from './lib/flow_monitor_do';

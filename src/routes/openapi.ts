@@ -4,6 +4,7 @@
  */
 
 import { Hono } from 'hono';
+import { stringify } from 'yaml';
 import type { Env } from '../utils/types';
 import { generateOpenAPISpec } from '../lib/openapi';
 
@@ -25,6 +26,17 @@ openapi.get('/', (c) => {
 openapi.get('/openapi.json', (c) => {
   const spec = generateOpenAPISpec();
   return c.json(spec);
+});
+
+/**
+ * GET /openapi.yaml
+ * Returns OpenAPI spec in YAML format
+ */
+openapi.get('/openapi.yaml', (c) => {
+  const spec = generateOpenAPISpec();
+  return c.text(stringify(spec), 200, {
+    'Content-Type': 'application/yaml',
+  });
 });
 
 export default openapi;

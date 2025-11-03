@@ -50,7 +50,7 @@ databases.post('/:database_id/query', async (c) => {
     const validated = QueryDatabaseSchema.parse({ ...body, database_id });
 
     const notion = createNotionClient(notion_token);
-    const results = await notion.databases.query(validated as any);
+    const results = await (notion.databases as any).query(validated as any);
 
     return c.json(successResponse(results));
   } catch (error: any) {
