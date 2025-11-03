@@ -74,66 +74,16 @@ app.get('/', (c) => {
 
 // Static file serving (for frontend assets)
 // Note: In production, this would be handled by the assets binding
-app.get('/docs', (c) => {
-  return c.html(`
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notion Proxy API - Documentation</title>
-  <style>
-    body { font-family: system-ui, -apple-system, sans-serif; max-width: 1200px; margin: 0 auto; padding: 2rem; }
-    h1 { color: #333; }
-    pre { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
-    .endpoint { margin: 2rem 0; padding: 1rem; border-left: 4px solid #007bff; background: #f8f9fa; }
-  </style>
-</head>
-<body>
-  <h1>Notion Proxy API Documentation</h1>
-  <p>Welcome to the Notion Proxy Worker API. This service provides a REST interface to the Notion SDK.</p>
-  
-  <h2>Quick Start</h2>
-  <p>View the full OpenAPI specification: <a href="/openapi">/openapi</a></p>
-  
-  <div class="endpoint">
-    <h3>Health Check</h3>
-    <p>GET /health - Check worker status</p>
-  </div>
-  
-  <div class="endpoint">
-    <h3>Monitor</h3>
-    <p>GET /monitor - View request logs and flow runs (requires auth)</p>
-  </div>
-  
-  <div class="endpoint">
-    <h3>Raw API</h3>
-    <p>Proxy endpoints for Notion SDK operations:</p>
-    <ul>
-      <li>GET /api/raw/pages/:page_id</li>
-      <li>POST /api/raw/pages</li>
-      <li>GET /api/raw/databases/:database_id</li>
-      <li>POST /api/raw/databases/:database_id/query</li>
-      <li>POST /api/raw/search</li>
-    </ul>
-  </div>
-  
-  <div class="endpoint">
-    <h3>Flows</h3>
-    <p>Orchestrated multi-step operations:</p>
-    <ul>
-      <li>POST /api/flows/createPageWithBlocks</li>
-      <li>POST /api/flows/cloneDatabaseSchema</li>
-      <li>POST /api/flows/searchAndTag</li>
-    </ul>
-  </div>
-  
-  <h2>Authentication</h2>
-  <p>Protected endpoints require the <code>Authorization: Bearer &lt;WORKER_API_KEY&gt;</code> header.</p>
-  <p>Raw API endpoints require the <code>x-notion-token</code> header with your Notion integration token.</p>
-</body>
-</html>
-  `);
+app.get('/docs', async (c) => {
+  const docsHtml = await c.env.ASSETS.fetch(new URL('/docs.html', c.req.url));
+  if (docsHtml.ok) {
+    return new Response(docsHtml.body, {
+      headers: {
+        'Content-Type': 'text/html;charset=UTF-8',
+      },
+    });
+  }
+  return c.notFound();
 });
 
 export default app;
