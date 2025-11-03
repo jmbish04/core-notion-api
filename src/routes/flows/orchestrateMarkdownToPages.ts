@@ -128,7 +128,7 @@ orchestrate.post('/', async (c) => {
       );
 
       const page = await notion.pages.create({
-        parent: { page_id: validated.base_parent_page_id } as any,
+        parent: { page_id: validated.base_parent_page_id },
         properties: {
           title: {
             title: [
