@@ -92,7 +92,7 @@ export function MonitorPage() {
               </Table.Thead>
               <Table.Tbody>
                 {payload.data.logs.map((log, index) => (
-                  <Table.Tr key={`${log.id}-${index}`}>
+                  <Table.Tr key={log.id}>
                     <Table.Td>{log.method}</Table.Td>
                     <Table.Td>{log.path}</Table.Td>
                     <Table.Td>{log.status}</Table.Td>
