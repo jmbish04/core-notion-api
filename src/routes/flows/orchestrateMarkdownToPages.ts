@@ -90,7 +90,7 @@ orchestrate.post('/', async (c) => {
       })
     );
 
-    const plannerResult = await c.env.AI.run(validated.ai_model as any, {
+    const plannerResult = await c.env.AI.run(validated.ai_model, {
       messages: [
         {
           role: 'system',
