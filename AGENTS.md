@@ -35,6 +35,7 @@ Each agent (or module) is designed for autonomous, composable development and or
     - `createPageWithBlocks`
     - `cloneDatabaseSchema`
     - `searchAndTag`
+    - `orchestrateMarkdownToPages`
   - Manage transactional consistency (rollback on failure).
   - Emit real-time progress via WebSocket and SSE.
 - **Success Criteria:** Simplified developer experience, traceable flow runs, consistent states.
@@ -55,11 +56,11 @@ Each agent (or module) is designed for autonomous, composable development and or
 - **Goal:** Serve Mantine + Vite frontend UI from `public` directory.
 - **Responsibilities:**
   - Implement pages:
-    - `/docs` → interactive spec explorer
-    - `/monitor` → D1 logs and worker uptime
-    - `/flows` → trigger orchestrated flows
-  - Use `useApi()` hook to interact with Worker endpoints.
-  - Provide WebSocket live status updates for ongoing flows.
+    - `/docs` → interactive spec explorer backed by `/openapi.json`
+    - `/monitor` → D1 logs and worker uptime (Mantine tables)
+    - `/flows` → trigger orchestrated flows + subscribe to SSE updates
+  - Use `useWorkerClient()` hook to interact with Worker endpoints.
+  - Surface real-time flow telemetry via EventSource/WebSocket bridges.
 - **Success Criteria:** Lightweight UI, real-time feedback, full coverage of backend capabilities.
 
 ---
@@ -77,6 +78,10 @@ Each agent (or module) is designed for autonomous, composable development and or
 ### **WebSocket Agent**
 - **Goal:** Manage WebSocket sessions for `/ws/*` routes.
 - **Responsibilities:** Stream flow updates and logs to clients; fallback to MCP SSE when required.
+  - Durable Object: `FlowMonitorDO` (binding `FLOW_MONITOR`, migration `v1`).
+  - Routes:
+    - `/ws/flow-updates/:flowId` → WebSocket broadcast via DO
+    - `/mcp/stream/:flowId` → SSE bridge for MCP / EventSource clients
 
 ### **SSE Agent**
 - **Goal:** Serve as MCP-compatible event stream for `/mcp/stream`.

@@ -1,33 +1,62 @@
-/**
- * Server-Sent Events (SSE) utilities for MCP protocol
- * Provides streaming event interface for flow updates
- */
-
 import type { Context } from 'hono';
+import type { Env } from '../utils/types';
 
-/**
- * Create an SSE response stream
- * @param c - Hono context
- * @param eventGenerator - Async generator that yields events
- */
-export function createSSEStream(
-  c: Context,
-  eventGenerator: AsyncGenerator<any>
+const encoder = new TextEncoder();
+
+function encodeEvent(event: string, data: any): Uint8Array {
+  return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+}
+
+export function streamFlowUpdates(
+  c: Context<{ Bindings: Env }>,
+  flowId: string
 ): Response {
-  const encoder = new TextEncoder();
+  const stub = c.env.FLOW_MONITOR.get(c.env.FLOW_MONITOR.idFromName(flowId));
+  let upstream: WebSocket | null = null;
 
-  const stream = new ReadableStream({
+  const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      controller.enqueue(encodeEvent('connected', { flowId }));
+
       try {
-        for await (const event of eventGenerator) {
-          const data = `event: message\ndata: ${JSON.stringify(event)}\n\n`;
-          controller.enqueue(encoder.encode(data));
+        const response = await stub.fetch('https://flow-monitor', {
+          headers: {
+            Upgrade: 'websocket',
+          },
+        });
+
+        const socket = response.webSocket;
+        if (!socket) {
+          throw new Error('Flow monitor upgrade failed');
         }
-        controller.close();
+
+        upstream = socket;
+        upstream.accept();
+
+        upstream.addEventListener('message', (event) => {
+          try {
+            const payload = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+            controller.enqueue(encodeEvent('message', payload));
+          } catch (error) {
+            console.error('Failed to decode flow event:', error);
+          }
+        });
+
+        upstream.addEventListener('close', () => {
+          controller.close();
+        });
+
+        upstream.addEventListener('error', (error) => {
+          console.error('SSE upstream error:', error);
+          controller.error(error);
+        });
       } catch (error) {
-        console.error('SSE stream error:', error);
+        console.error('Failed to stream flow updates:', error);
         controller.error(error);
       }
+    },
+    cancel() {
+      upstream?.close();
     },
   });
 
@@ -35,16 +64,7 @@ export function createSSEStream(
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      Connection: 'keep-alive',
     },
   });
-}
-
-/**
- * Format an event for SSE transmission
- * @param eventType - Event type
- * @param data - Event data
- */
-export function formatSSEEvent(eventType: string, data: any): string {
-  return `event: ${eventType}\ndata: ${JSON.stringify(data)}\n\n`;
 }

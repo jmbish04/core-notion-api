@@ -46,3 +46,19 @@ export const SearchAndTagSchema = z.object({
     property: z.literal('object').optional(),
   }).optional().describe('Filter by object type'),
 });
+
+/**
+ * Schema for orchestrating markdown content into Notion pages using AI
+ */
+export const OrchestrateMarkdownToPagesSchema = z.object({
+  notion_token: z.string().describe('Notion API integration token'),
+  base_parent_page_id: z
+    .string()
+    .describe('Parent page ID under which generated pages will be created'),
+  markdown_content: z.string().describe('Full markdown document to orchestrate'),
+  ai_model: z
+    .string()
+    .optional()
+    .default('@cf/meta/llama-3-8b-instruct')
+    .describe('Workers AI model to use for planning and block conversion'),
+});

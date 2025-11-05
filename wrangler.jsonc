@@ -1,13 +1,15 @@
 {
   "name": "core-notion-api",
   "main": "src/index.ts",
-  "compatibility_date": "2025-11-02",
+  "compatibility_date": "2025-03-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
   "assets": {
     "binding": "ASSETS",
     "directory": "./public"
-  },
-  "observability": {
-    "enabled": true
   },
   "vars": {
     "NODE_ENV": "production"
@@ -20,7 +22,22 @@
       "migrations_dir": "migrations"
     }
   ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "FLOW_MONITOR",
+        "class_name": "FlowMonitorDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "class": "FlowMonitorDO"
+    }
+  ],
   "ai": {
     "binding": "AI"
-  }
+  },
+  "secrets": ["WORKER_API_KEY"]
 }
