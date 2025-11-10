@@ -33,7 +33,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240725.0",
     "@types/node": "^24.10.0",
-    "prettier": "^2.7.1",
+    "prettier": "^3.6.2",
     "typescript": "^5.3.3",
     "wrangler": "^4.45.4"
   }
